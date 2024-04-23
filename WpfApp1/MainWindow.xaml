@@ -4,9 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:media="clr-namespace:System.Windows.Media;assembly=PresentationCore"
+        xmlns:oxy="http://oxyplot.org/wpf"
         xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-
-        mc:Ignorable="d" Title="laba" Height="450" Width="800">
+        mc:Ignorable="d" Title="laba" Height="500" Width="900">
 
     <Window.Resources>
         <Style TargetType="TextBlock">
@@ -20,9 +22,21 @@
             <Setter Property="Margin" Value="5" />
         </Style>
         <local:ArrayToStringConverter x:Key="ArrayToStringConverter" />
+        <local:ArrayToStringConverter x:Key="IndexToVisibilityConverter" />
+        <local:ArrayToStringConverter x:Key="YourPropertyToBackgroundConverter" />
+        
+        <Style x:Key="CellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="{Binding Path=YourProperty, Converter={StaticResource YourPropertyToBackgroundConverter}}" />
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="LightBlue" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
     <Grid>
-        <TabControl Grid.Column="0" TabStripPlacement="Left">
+        <TabControl Grid.Column="0" TabStripPlacement="Left" x:Name="leftTabControl">
             <TabControl.Resources>
                 <Style TargetType="{x:Type TabItem}">
                     <Setter Property="HeaderTemplate">
@@ -39,7 +53,7 @@
                     <Setter Property="Padding" Value="3" />
                 </Style>
             </TabControl.Resources>
-            <TabItem Name="FTest" Header="GAUS" IsSelected="True">
+            <TabItem Name="FTest" Header="GAUS" Visibility="Hidden">
                 <TabItem.Content>
                     <Grid>
                         <Grid.RowDefinitions>
@@ -76,8 +90,7 @@
                     </Grid>
                 </TabItem.Content>
             </TabItem>
-
-            <TabItem Name="STest" Header="q2" IsEnabled="False">
+            <TabItem Name="STest" Header="q2" IsEnabled="False" Visibility="Hidden">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="0.1*"/>
@@ -120,8 +133,150 @@
                 </Grid>
             </TabItem>
 
-        </TabControl>
-        
 
+            <TabItem Name="Simplex" IsSelected="True" Header="Задача">
+                <Grid>
+                    <TabControl x:Name="lowTabControl" SelectionChanged="TabControl_SelectionChanged">
+                        <TabItem x:Name="starter" Header="Нач.">
+                            <Grid Background="LightBlue">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.6*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!--<StackPanel Grid.Column="0">-->
+                                <Grid Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                        <RowDefinition MinHeight="25" Height="1*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.RowSpan="2" Orientation="Vertical">
+                                        <TextBlock Text="{Binding SliderValueP, StringFormat='Число переменных: {0:0}'}" HorizontalAlignment="Center"/>
+                                        <Slider Name="countP" Value="{Binding SliderValueP, Mode=TwoWay}" Minimum="1" Maximum="16" TickFrequency="1" TickPlacement="BottomRight" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="2" Grid.RowSpan="2" Orientation="Vertical">
+                                        <TextBlock Text="{Binding SliderValueO, StringFormat='Число ограничений: {0:0}'}" HorizontalAlignment="Center"/>
+                                        <Slider Name="countO" Value="{Binding SliderValueO, Mode=TwoWay}" Minimum="1" Maximum="16" TickFrequency="1" TickPlacement="BottomRight" IsSnapToTickEnabled="True" ValueChanged="Slider_ValueChanged"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Row="4" Text="Метод решения"/>
+                                    <ComboBox Grid.Row="5" x:Name="MethodBox" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"/>
+
+                                    <TextBlock Grid.Row="6" Text="Вид дробей"/>
+                                    <ComboBox Grid.Row="7" x:Name="ViewNumBox" SelectedItem="{Binding SelectedItemNumberView, Mode=TwoWay}"/>
+
+                                    <StackPanel Grid.Row="8">
+                                        <Grid Background="LightBlue">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1*"/>
+                                                <ColumnDefinition Width="1*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0" Width="100" Content="решить задачу" Click="myButton_Click" Command="{Binding ButtonCommand}" Background="LightBlue" ToolTip="Зависит от 'Метод Решения'"/>
+                                            <Button Grid.Column="1" Width="100" Content="граф. метод" Click="paintResult" Background="LightBlue" />
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <TextBox Grid.Row="9" Text="{Binding TextBoxText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <TextBox.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock>
+                                                        <Run Text="Ввести Базис" />
+                                                        <LineBreak />
+                                                        <Run Text="x1 x2 x3 x4 x5 x6"/>
+                                                        <LineBreak />
+                                                        <Run Text=" 0   1   2   3   4   5"/>
+                                                </TextBlock>
+                                            </ToolTip>
+                                        </TextBox.ToolTip>
+                                    </TextBox>
+
+                                    <StackPanel Grid.Row="10">
+                                        <Grid Background="LightBlue">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1*"/>
+                                                <ColumnDefinition Width="1*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0" Content="Сохранить" Command="{Binding SaveCommand}"/>
+                                            <!--<Button Grid.Column="1" Content="Загрузить" Command="{Binding LoadCommand}"/>-->
+                                            <TextBox Grid.Column="2" Text="{Binding Text6, UpdateSourceTrigger=PropertyChanged}" ToolTip="Имя файла"/>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <ListBox Grid.Row="11" Grid.RowSpan="6" ItemsSource="{Binding selectedSaveInFile}" SelectedItem="{Binding TextNameSave}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="5">
+                                                    <TextBlock FontSize="18" Text="{Binding}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+
+                                <DataGrid Grid.Column="1" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" 
+                                          x:Name="myDataGrid" CellEditEnding="DataGrid_CellEditEnding" />
+                            </Grid>
+                        </TabItem>
+                        <TabItem x:Name="tabItemSimpl" Header="Симпл.">
+                            <Grid Background="LightGreen">
+                                <DataGrid ItemsSource="{Binding RowsRes}" AutoGenerateColumns="False" x:Name="simplDataGrid" IsReadOnly="True"/>
+                            </Grid>
+                        </TabItem>
+                        <TabItem x:Name="tabItemABasis" Header="И.Базис">
+                            <Grid Background="LightPink">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.6*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition MinHeight="25" Height="1*"/>
+                                            <RowDefinition MinHeight="25" Height="1*"/>
+                                            <RowDefinition MinHeight="25" Height="1*"/>
+                                            <RowDefinition MinHeight="25" Height="1*"/>
+                                            <RowDefinition MinHeight="25" Height="1*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Button Grid.Row="0" Width="100" Content="шаг назад" Click="myButton_Click" Command="{Binding ButtonCommandBack}" Background="LightBlue" />
+                                        <Button Grid.Row="1" Width="100" Content="Шаг вперед" Click="myButton_Click" Command="{Binding ButtonCommandForward}" Background="LightBlue" />
+                                        <Button Grid.Row="2" Width="100" Content="Решить задачу" Click="myButton_Click" Command="{Binding ButtonCommandFullForward}" Background="LightBlue" />
+                                        <Button Grid.Row="3" Width="100" Content="Исп. Выбран. Эл." Click="myButton_Click" Command="{Binding ButtonCommandSelectElement}" Background="LightBlue" />
+                                        <ComboBox Grid.Row="4" x:Name="ElementBox" ItemsSource="{Binding BasisString}" SelectedItem="{Binding SelectedItemBasis}"/>
+
+                                    </Grid>
+                                </StackPanel>
+                                
+                                <DataGrid Grid.Column="1" ItemsSource="{Binding RowsResABasis}" AutoGenerateColumns="False" 
+                                          x:Name="abasisDataGrid" IsReadOnly="True" PreviewMouseLeftButtonDown="DataGrid_PreviewMouseLeftButtonDown"/>
+                            </Grid>
+                        </TabItem>
+                        <TabItem x:Name="tabItemGraf" Header="Графич.">
+                            <!--<Grid x:Name="grid1">
+                            </Grid>-->
+                            <oxy:PlotView x:Name="plotView" MinHeight="700" MinWidth="900"/>
+                        </TabItem>
+                    </TabControl>
+
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
